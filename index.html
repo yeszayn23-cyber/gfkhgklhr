@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحفظة السحابية</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #f7f4ed;
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --primary-brown: #4a3327;
+            --light-brown: #8c6d59;
+            --accent-beige: #e6dfd5;
+            --soft-border: #dcd4c5;
+            --text-color: #332219;
+            --danger-color: #b73232;
+            --success-color: #2e7d32;
+            --shadow: 0 10px 30px rgba(74, 51, 39, 0.08);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 30px 22px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border: 1px solid var(--soft-border);
+        }
+
+        .app-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary-brown);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: var(--light-brown);
+            margin-bottom: 25px;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 90%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 2px solid var(--accent-beige);
+            background-color: rgba(250, 248, 245, 0.9);
+            color: var(--text-color);
+            font-size: 15px;
+            margin-bottom: 12px;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-brown);
+            background-color: #fff;
+        }
+
+        button {
+            background-color: var(--primary-brown);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(74, 51, 39, 0.15);
+            margin-top: 10px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            background-color: #38251c;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            box-shadow: 0 4px 12px rgba(183, 50, 50, 0.15);
+        }
+
+        .btn-danger:hover {
+            background-color: #992828;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+        }
+
+        .btn-success:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-beige);
+            color: var(--primary-brown);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d4cbc0;
+        }
+
+        .wallet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .wallet-box {
+            background: linear-gradient(145deg, rgba(250, 248, 245, 0.9), rgba(243, 239, 230, 0.9));
+            padding: 18px 10px;
+            border-radius: 18px;
+            border: 1px solid var(--soft-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .wallet-box:hover {
+            border-color: var(--primary-brown);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(74, 51, 39, 0.08);
+        }
+
+        .wallet-box h3 {
+            margin: 0 0 6px 0;
+            font-size: 15px;
+            color: var(--primary-brown);
+        }
+
+        .wallet-box p {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-brown);
+        }
+
+        .full-width-box {
+            grid-column: span 2;
+            background: linear-gradient(145deg, rgba(250, 248, 245, 0.95), rgba(235, 227, 215, 0.95));
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .counter-display {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary-brown);
+            margin: 15px 0 5px 0;
+        }
+
+        .symbols-container {
+            font-size: 20px;
+            letter-spacing: 4px;
+            margin: 20px 0;
+            min-height: 45px;
+            padding: 10px;
+            background-color: rgba(250, 248, 245, 0.8);
+            border-radius: 12px;
+            border: 1px dashed var(--soft-border);
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--soft-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            background-color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--accent-beige);
+        }
+
+        th {
+            background-color: var(--accent-beige);
+            color: var(--primary-brown);
+            font-weight: 700;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .mini-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+            width: auto;
+            box-shadow: none;
+            margin-top: 0;
+        }
+
+        .welcome-badge {
+            display: inline-block;
+            background-color: var(--accent-beige);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--primary-brown);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .bg-settings-box {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--soft-border);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div id="login-screen" class="screen card active">
+        <div class="app-title">المحفظة السحابية</div>
+        <div class="app-subtitle">نظام المتابعة والتنظيم</div>
+        <input type="text" id="username-input" placeholder="اكتبي اسمكِ هنا...">
+        <button onclick="registerUser()">دخول للمحفظة</button>
+    </div>
+
+    <div id="main-screen" class="screen card">
+        <div class="app-title">المحفظة</div>
+        <div class="welcome-badge" id="welcome-user">أهلاً بكِ، <span></span></div>
+        
+        <div class="wallet-grid">
+            <div class="wallet-box" onclick="switchScreen('stars-wallet')">
+                <h3>⭐ النجوم</h3>
+                <p id="preview-stars">0</p>
+            </div>
+            <div class="wallet-box" onclick="switchScreen('bans-wallet')">
+                <h3>🔴 الإقصاءات</h3>
+                <p id="preview-bans">0</p>
+            </div>
+            <div class="wallet-box full-width-box" onclick="switchScreen('tasks-wallet')">
+                <h3>📋 النقاط العملية</h3>
+                <p id="preview-tasks" style="font-size: 14px; color: var(--light-brown); margin-top: 4px;">اضغطي لعرض الجدول</p>
+            </div>
+        </div>
+
+        <div class="bg-settings-box">
+            <input type="file" id="bg-file-input" accept="image/*" onchange="previewAndSaveBg(event)">
+            <button class="btn-secondary" onclick="removeBackground()">حذف الخلفية</button>
+        </div>
+
+        <div id="admin-panel-btn-container" class="hidden">
+            <button style="background-color: var(--primary-brown); margin-top: 15px;" onclick="switchScreen('admin-panel')">لوحة تحكم المالكة 👑</button>
+        </div>
+    </div>
+
+    <div id="stars-wallet" class="screen card">
+        <h2>⭐ محفظة النجوم</h2>
+        
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 13px; color: var(--light-brown); margin-bottom: 2px;">النجوم العادية</div>
+            <div class="counter-display" id="stars-count" style="margin: 0;">0</div>
+            <div class="symbols-container" id="stars-symbols" style="margin: 8px 0; min-height: 35px;"></div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="modifyStars(1)">إضافة نجمة ⭐</button>
+                <button class="btn-danger" onclick="modifyStars(-1)">حذف</button>
+            </div>
+        </div>
+
+        <div style="border-top: 1px dashed var(--soft-border); padding-top: 15px; margin-top: 15px;">
+            <div style="font-size: 13px; color: var(--light-brown); margin-bottom: 2px;">النجوم المتطورة (المشعة)</div>
+            <div class="counter-display" id="advanced-stars-count" style="margin: 0; color: #b8860b;">0</div>
+            <div class="symbols-container" id="advanced-stars-symbols" style="margin: 8px 0; min-height: 35px;"></div>
+            <div style="display: flex; gap: 8px;">
+                <button style="background-color: #d4a373;" onclick="modifyAdvancedStars(1)">إضافة نجمة 🌟</button>
+                <button class="btn-danger" onclick="modifyAdvancedStars(-1)">حذف</button>
+            </div>
+        </div>
+
+        <button class="btn-secondary" onclick="switchScreen('main-screen')" style="margin-top: 15px;">الرجوع للرئيسية</button>
+    </div>
+
+    <div id="bans-wallet" class="screen card">
+        <h2>🔴 محفظة الإقصاءات</h2>
+        <div class="counter-display" id="bans-count">0</div>
+        <div class="symbols-container" id="symbols-container-bans"></div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-danger" onclick="modifyBans(1)">إضافة إقصاء 🔴</button>
+            <button class="btn-secondary" onclick="modifyBans(-1)" style="margin-top:0;">حذف</button>
+        </div>
+        <button class="btn-secondary" onclick="switchScreen('main-screen')" style="margin-top: 15px;">الرجوع للرئيسية</button>
+    </div>
+
+    <div id="tasks-wallet" class="screen card">
+        <h2>📋 النقاط العملية</h2>
+        <div class="app-subtitle">اضغطي على العلامة لتغيير حالة التنفيذ</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>النقطة العملية</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody id="user-tasks-tbody">
+                    <tr><td colspan="2" style="color: var(--light-brown);">لا توجد نقاط عملية مضافة حالياً</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-secondary" onclick="switchScreen('main-screen')" style="margin-top: 15px;">الرجوع للرئيسية</button>
+    </div>
+
+    <div id="admin-panel" class="screen card">
+        <h2>👑 لوحة تحكم المالكة</h2>
+        <div class="app-subtitle">إدارة العضوات والنجوم والإقصاءات والمهام</div>
+        
+        <div style="background: rgba(250,248,245,0.9); padding: 12px; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--soft-border);">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; color: var(--primary-brown);">إدارة النقاط العملية</h3>
+            <input type="text" id="admin-task-input" placeholder="اكتبي نص النقطة العملية الجديدة..." style="margin-bottom: 8px; width: 100%;">
+            <button onclick="addAdminTask()" style="margin-top: 0; padding: 10px;">إضافة نقطة جديدة للجميع</button>
+            
+            <div class="table-responsive" style="margin-top: 10px; max-height: 150px; overflow-y: auto;">
+                <table>
+                    <tbody id="admin-global-tasks-tbody">
+                        <tr><td style="color: var(--light-brown); font-size:12px;">لا توجد نقاط عملية عامة</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h3 style="font-size: 15px; color: var(--primary-brown); margin: 15px 0 8px 0; text-align: right;">جدول العضوات المسجلات</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الاسم (والآيدي)</th>
+                        <th>⭐ / 🌟</th>
+                        <th>🔴</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-tbody">
+                    <tr><td colspan="4" style="color: var(--light-brown);">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-secondary" onclick="switchScreen('main-screen')" style="margin-top: 15px;">الرجوع للرئيسية</button>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const ADMIN_ID = "8421694319";
+    let currentTelegramId = "user_" + Math.floor(Math.random() * 1000000); // آيدي افتراضي في حال لم يُفتح عبر تيليجرام
+    let currentUserName = localStorage.getItem('wallet_current_user_name') || "";
+    let currentUserKey = localStorage.getItem('wallet_current_user_key') || "";
+    let allUsers = {};
+    let globalTasks = {};
+    let currentUserData = { stars: 0, advancedStars: 0, bans: 0, background: "", tasks: {} };
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDZsmaDCvrVzplI01FOaPdRAXfZ5psYabE",
+        authDomain: "mywallet-11d29.firebaseapp.com",
+        databaseURL: "https://mywallet-11d29-default-rtdb.firebaseio.com/",
+        projectId: "mywallet-11d29",
+        storageBucket: "mywallet-11d29.firebasestorage.app",
+        messagingSenderId: "249088283797",
+        appId: "1:249088283797:web:707c46388467c346b7379c",
+        measurementId: "G-LQFQ15FFZJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.onload = function() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                currentTelegramId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+            }
+        }
+
+        // الاستماع لقائمة النقاط العملية العامة
+        onValue(ref(db, 'globalTasks'), (snapshot) => {
+            globalTasks = snapshot.val() || {};
+            if (currentUserName) {
+                renderUserTasks();
+            }
+            if (currentTelegramId === ADMIN_ID) {
+                renderAdminGlobalTasks();
+            }
+        });
+
+        // الاستماع لقائمة المستخدمين
+        onValue(ref(db, 'users'), (snapshot) => {
+            allUsers = snapshot.val() || {};
+            if (document.getElementById('admin-panel').classList.contains('active')) {
+                renderAdminUsersTable();
+            }
+        });
+
+        // إذا كان المستخدم مسجلاً من قبل
+        if (currentUserName && currentUserKey) {
+            loadUserSession(currentUserKey, false);
+        }
+    };
+
+    function loadUserSession(userKey, hideLogin) {
+        currentUserKey = userKey;
+        const userRef = ref(db, 'users/' + currentUserKey);
+
+        onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+                currentUserData = snapshot.val();
+                currentUserName = currentUserData.name;
+                localStorage.setItem('wallet_current_user_name', currentUserName);
+                localStorage.setItem('wallet_current_user_key', currentUserKey);
+            } else {
+                // إذا لم يوجد، ننشئه
+                currentUserData = { name: currentUserName, telegramId: currentTelegramId, stars: 0, advancedStars: 0, bans: 0, background: "", tasks: {} };
+                set(userRef, currentUserData);
+            }
+
+            if (currentUserData.background) {
+                applyBg(currentUserData.background);
+            } else {
+                document.body.style.backgroundImage = "none";
+            }
+
+            if (hideLogin || localStorage.getItem('wallet_current_user_name')) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('main-screen').classList.add('active');
+            }
+
+            document.querySelector('#welcome-user span').innerText = currentUserName;
+
+            // التحقق من المالكة عبر الآيدي
+            if (currentTelegramId === ADMIN_ID) {
+                document.getElementById('admin-panel-btn-container').classList.remove('hidden');
+            } else {
+                document.getElementById('admin-panel-btn-container').classList.add('hidden');
+            }
+
+            updateUI();
+        });
+    }
+
+    window.registerUser = async function() {
+        const inputName = document.getElementById('username-input').value.trim();
+        if (!inputName) {
+            alert("الرجاء إدخال اسمكِ أولاً!");
+            return;
+        }
+        currentUserName = inputName;
+        
+        // إنشاء مفتاح فريد لكل يوزر سحابياً
+        const userRef = push(ref(db, 'users'));
+        currentUserKey = userRef.key;
+
+        currentUserData = {
+            name: currentUserName,
+            telegramId: currentTelegramId,
+            stars: 0,
+            advancedStars: 0,
+            bans: 0,
+            background: "",
+            tasks: {}
+        };
+
+        await set(userRef, currentUserData);
+        localStorage.setItem('wallet_current_user_name', currentUserName);
+        localStorage.setItem('wallet_current_user_key', currentUserKey);
+
+        loadUserSession(currentUserKey, true);
+    }
+
+    window.switchScreen = function(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        
+        if (screenId === 'stars-wallet') updateStarsUI();
+        if (screenId === 'bans-wallet') updateBansUI();
+        if (screenId === 'tasks-wallet') renderUserTasks();
+        if (screenId === 'admin-panel') {
+            renderAdminUsersTable();
+            renderAdminGlobalTasks();
+        }
+        if (screenId === 'main-screen') updateUI();
+    }
+
+    // تعديل النجوم العادية
+    window.modifyStars = async function(amount) {
+        currentUserData.stars += amount;
+        if (currentUserData.stars < 0) currentUserData.stars = 0;
+        updateStarsUI();
+        updateUI();
+        await update(ref(db, 'users/' + currentUserKey), { stars: currentUserData.stars });
+    }
+
+    // تعديل النجوم المتطورة (المشعة 🌟)
+    window.modifyAdvancedStars = async function(amount) {
+        currentUserData.advancedStars += amount;
+        if (currentUserData.advancedStars < 0) currentUserData.advancedStars = 0;
+        updateStarsUI();
+        updateUI();
+        await update(ref(db, 'users/' + currentUserKey), { advancedStars: currentUserData.advancedStars });
+    }
+
+    // تعديل الإقصاءات
+    window.modifyBans = async function(amount) {
+        currentUserData.bans += amount;
+        if (currentUserData.bans < 0) currentUserData.bans = 0;
+        updateBansUI();
+        updateUI();
+        await update(ref(db, 'users/' + currentUserKey), { bans: currentUserData.bans });
+    }
+
+    function updateStarsUI() {
+        document.getElementById('stars-count').innerText = currentUserData.stars;
+        document.getElementById('stars-symbols').innerText = currentUserData.stars > 0 ? "⭐".repeat(currentUserData.stars) : "لا توجد نجوم عادية";
+
+        document.getElementById('advanced-stars-count').innerText = currentUserData.advancedStars;
+        document.getElementById('advanced-stars-symbols').innerText = currentUserData.advancedStars > 0 ? "🌟".repeat(currentUserData.advancedStars) : "لا توجد نجوم مشعة";
+    }
+
+    function updateBansUI() {
+        document.getElementById('bans-count').innerText = currentUserData.bans;
+        document.getElementById('symbols-container-bans').innerText = currentUserData.bans > 0 ? "🔴".repeat(currentUserData.bans) : "سجل نظيف تماماً";
+    }
+
+    function updateUI() {
+        document.getElementById('preview-stars').innerText = `${currentUserData.stars || 0} ⭐ / ${currentUserData.advancedStars || 0} 🌟`;
+        document.getElementById('preview-bans').innerText = currentUserData.bans || 0;
+        
+        const taskKeys = Object.keys(globalTasks);
+        if (taskKeys.length === 0) {
+            document.getElementById('preview-tasks').innerText = "لا توجد نقاط عملية حالياً";
+        } else {
+            let doneCount = 0;
+            taskKeys.forEach(id => {
+                if (currentUserData.tasks && currentUserData.tasks[id] === true) doneCount++;
+            });
+            document.getElementById('preview-tasks').innerText = `${doneCount} / ${taskKeys.length} تم التنفيذ`;
+        }
+    }
+
+    // جدول النقاط العملية للعضوة مع تبديل ✅ و ❌
+    function renderUserTasks() {
+        const tbody = document.getElementById('user-tasks-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const taskIds = Object.keys(globalTasks);
+        if (taskIds.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="2" style="color: var(--light-brown);">لا توجد نقاط عملية مضافة حالياً</td></tr>`;
+            return;
+        }
+
+        if (!currentUserData.tasks) currentUserData.tasks = {};
+
+        taskIds.forEach(id => {
+            const taskText = globalTasks[id];
+            const isDone = currentUserData.tasks[id] === true;
+            const btnSymbol = isDone ? "✅" : "❌";
+
+            tbody.innerHTML += `<tr>
+                <td style="text-align: right; padding-right: 12px;">${taskText}</td>
+                <td>
+                    <button class="mini-btn ${isDone ? 'btn-success' : 'btn-danger'}" onclick="toggleTaskStatus('${id}')" style="font-size: 16px; padding: 4px 12px;">${btnSymbol}</button>
+                </td>
+            </tr>`;
+        });
+        updateUI();
+    }
+
+    window.toggleTaskStatus = async function(taskId) {
+        if (!currentUserData.tasks) currentUserData.tasks = {};
+        currentUserData.tasks[taskId] = !currentUserData.tasks[taskId];
+        
+        renderUserTasks();
+        await update(ref(db, `users/${currentUserKey}/tasks`), currentUserData.tasks);
+    }
+
+    // لوحة تحكم المالكة: عرض الجدول وتصفير العدادات أو الحذف
+    function renderAdminUsersTable() {
+        const tbody = document.getElementById('admin-users-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const userKeys = Object.keys(allUsers);
+        if (userKeys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="color: var(--light-brown);">لا توجد عضوات مسجلات بعد</td></tr>`;
+            return;
+        }
+
+        userKeys.forEach(key => {
+            const user = allUsers[key];
+            tbody.innerHTML += `<tr>
+                <td><strong>${user.name}</strong><br><span style="font-size:10px; color:var(--light-brown);">${user.telegramId || 'بدون آيدي'}</span></td>
+                <td>⭐${user.stars || 0} / 🌟${user.advancedStars || 0}</td>
+                <td>🔴 ${user.bans || 0}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-secondary mini-btn" onclick="adminResetUser('${key}')" title="تصفير العدادات">🔄</button>
+                        <button class="btn-danger mini-btn" onclick="adminDeleteUser('${key}')" title="حذف العضوة">❌</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+    }
+
+    window.adminResetUser = async function(key) {
+        if (confirm("هل أنتِ متأكدة من تصفير نجوم وإقصاءات هذه العضوة؟")) {
+            await update(ref(db, 'users/' + key), { stars: 0, advancedStars: 0, bans: 0 });
+            if (key === currentUserKey) {
+                currentUserData.stars = 0;
+                currentUserData.advancedStars = 0;
+                currentUserData.bans = 0;
+                updateUI();
+            }
+        }
+    }
+
+    window.adminDeleteUser = async function(key) {
+        if (confirm("هل أنتِ متأكدة من حذف هذه العضوة تماماً من السحابة؟")) {
+            await remove(ref(db, 'users/' + key));
+            if (key === currentUserKey) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    }
+
+    // إدارة النقاط العملية العامة (للosten)
+    window.addAdminTask = async function() {
+        const input = document.getElementById('admin-task-input');
+        const text = input.value.trim();
+        if (!text) {
+            alert("يرجى كتابة نص النقطة العملية!");
+            return;
+        }
+        await push(ref(db, 'globalTasks'), text);
+        input.value = "";
+    }
+
+    function renderAdminGlobalTasks() {
+        const tbody = document.getElementById('admin-global-tasks-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const taskIds = Object.keys(globalTasks);
+        if (taskIds.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="2" style="color: var(--light-brown); font-size:12px;">لا توجد نقاط عملية عامة</td></tr>`;
+            return;
+        }
+
+        taskIds.forEach(id => {
+            const text = globalTasks[id];
+            tbody.innerHTML += `<tr>
+                <td style="text-align: right; font-size: 12px; padding: 4px;">${text}</td>
+                <td style="width: 40px;"><button class="btn-danger mini-btn" onclick="deleteGlobalTask('${id}')" style="padding: 2px 6px; font-size: 10px;">❌</button></td>
+            </tr>`;
+        });
+    }
+
+    window.deleteGlobalTask = async function(id) {
+        if (confirm("هل تريدين حذف هذه النقطة العملية نهائياً؟")) {
+            await remove(ref(db, 'globalTasks/' + id));
+        }
+    }
+
+    // إعدادات الخلفية الشخصية
+    window.previewAndSaveBg = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64Image = e.target.result;
+            currentUserData.background = base64Image;
+            applyBg(base64Image);
+
+            try {
+                await update(ref(db, 'users/' + currentUserKey), { background: base64Image });
+                alert("تم حفظ خلفيتك الشخصية بنجاح وتطبيقها!");
+            } catch(err) {
+                alert("حجم الصورة كبير جداً، يرجى اختيار صورة أصغر.");
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removeBackground = async function() {
+        if (confirm("هل تريدين إزالة خلفيتك الشخصية؟")) {
+            currentUserData.background = "";
+            document.body.style.backgroundImage = "none";
+            await update(ref(db, 'users/' + currentUserKey), { background: "" });
+            alert("تم إزالة الخلفية بنجاح.");
+        }
+    }
+
+    function applyBg(imgUrl) {
+        document.body.style.backgroundImage = `url('${imgUrl}')`;
+    }
+</script>
+
+</body>
+</html>
